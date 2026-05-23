@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+    <title>Backdrunk Movie</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+        <script>
+
+            // Function to get random number
+            function getRandomNumber(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+
+            // Add event listener when the document is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                // Get the element
+                var elements = document.getElementsByClassName('card-image');
+
+                for (var i = 0; i < elements.length; i++) {
+                    const randomNumber = getRandomNumber(-0, 0);
+                    elements[i].style.transform = `rotateZ(${randomNumber}deg)`;
+
+                    // Add event listener to the element
+                    elements[i].addEventListener('mouseover', (el) => {
+                        el.target.style.transform = `rotateZ(0deg) scale(1)`;
+                    });
+
+                    elements[i].addEventListener('mouseout', (el) => {
+                        el.target.style.transform = `rotateZ(${randomNumber}deg) scale(1)`;
+                    });
+                    
+                }
+           });
+
+      </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 100%;
+            background: linear-gradient(90deg, rgba(2, 0, 36, 1) 0%, rgba(69, 9, 121, 1) 33%, rgba(0, 73, 72, 1) 100%);
+            background-size: 400% 400%;
+            height: 100vh;
+            animation: gradient 30s ease infinite;
+            color: #f5f5f5;
+            margin-top: 1rem;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 40%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 60%;
+            }
+        }
+
+        input[type="text"],
+        select {
+            padding: 0.5rem;
+            margin: 0.5rem;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button[type="submit"] {
+            padding: 0.5rem;
+            margin: 0.5rem;
+            width: 100px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background: #f5f5f5;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .title {
+            font-size: 1.4rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;            
+        }
+        .sub-title {
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+        }
+
+        .form-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .filter-form {
+            padding: 1rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
+            border-radius: 15px;
+            background-color: rgba(51, 51, 51, 0.5);
+        }
+
+        .genres {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            margin: 0.5rem;
+        }
+
+        a:hover {
+            text-decoration: underline;
+            color: #f5f5f5;
+        }
+
+        .movie-grid-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: stretch;
+            justify-content: center;
+        }
+
+        .card-container {
+            margin: 0.4rem;
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 12px;
+            background-repeat: no-repeat !important;
+            background-position: center center !important;
+            background-size: 500% !important;
+        }
+
+        .card-container:hover {
+            z-index: 1000;
+            border: 1px solid #f5f5f5;
+            background-size: 400% !important;
+            img {
+                scale: 1.05;
+            }
+
+        }
+        .card-container:active {
+            z-index: 1000;
+            border: 1px solid #f5f5f5;
+            background-size: 400% !important;
+            img {
+                scale: 1.05;
+            }
+        }
+
+        .movie-card {
+            overflow: auto;
+            position: relative;
+            text-align: center;
+            max-width: 300px;
+            height: 100%;
+            border-radius: 12px;
+            backdrop-filter: blur(30px);
+            background: rgba(0, 0, 0, 0.6);
+            transition: blur 0.3s ease-in-out;
+            overflow: hidden;
+        }
+
+        .movie-card:hover {
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+        .movie-card:active {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        .card-image {
+            width: 100%;
+            padding-left: 2rem;
+            padding-right: 2rem;
+            height: auto;
+            transition: all 0.2s ease-in-out;
+            transform: rotate(0deg);
+        }
+
+
+        .info-container {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+
+        .text-light {
+            color: #f5f5f5;
+            text-shadow: #000 1px 1px 1px;
+        }
+
+        .text-muted {
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+        }
+
+        .selected-genre {
+            font-weight: bold;
+            color: #ffb95c;
+            text-decoration: underline;
+        }
+
+        .selected {
+            font-weight: bold;
+            color: #ffb95c;
+            text-decoration: underline;
+        }
+
+        .current {
+            font-weight: bold;
+            color: #ffb95c;
+            text-decoration: underline;
+        }
+
+        .decades {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 0.2rem;
+            font-size: 0.9rem;
+        }
+
+        .container-fluid {
+            padding-left: 15px;
+            padding-right: 15px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .text-small {
+            font-size: 0.8rem;
+        }
+        .icon-flag {
+            color: #ffb95c;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        
+    <div class="form-container">
+        <div class="filter-form">
+            <form method="get">
+                <label for="search_text">Search:</label>
+                <input type="text" id="search_text" name="search_text" value="{{ search_text }}">
+                <label for="year">Year:</label>
+                <input type="text" id="year" name="year" value="{{ year }}">
+                <label for="sort_by">Sort By:</label>
+                <select id="sort_by" name="sort_by">
+                    <option value="id" {% if sort_by=='id' %}selected{% endif %}>ID</option>
+                    <option value="vote_average" {% if sort_by=='vote_average' %}selected{% endif %}>Rating</option>
+                    <option value="popularity" {% if sort_by=='popularity' %}selected{% endif %}>Popularity</option>
+                    <option value="name" {% if sort_by=='name' %}selected{% endif %}>Name</option>
+                    <option value="year" {% if sort_by=='year' %}selected{% endif %}>Year</option>
+                    <option value="type" {% if sort_by=='type' %}selected{% endif %}>Genre</option>
+                    <option value="created" {% if sort_by=='created' %}selected{% endif %}>Created</option>
+                </select>
+                <select id="original_language" name="original_language">
+                    <option value="" {% if original_language=='' %}selected{% endif %}>All</option>
+                    <option value="en" {% if original_language=='en' %}selected{% endif %}>English</option>
+                    <option value="sv" {% if original_language=='sv' %}selected{% endif %}>Swedish</option>
+                    <option value="no" {% if original_language=='no' %}selected{% endif %}>Norwegian</option>
+                    <option value="da" {% if original_language=='da' %}selected{% endif %}>Danish</option>
+                    <option value="es" {% if original_language=='es' %}selected{% endif %}>Spanish</option>
+                    <option value="fr" {% if original_language=='fr' %}selected{% endif %}>French</option>
+                    <option value="de" {% if original_language=='de' %}selected{% endif %}>German</option>
+                    <option value="it" {% if original_language=='it' %}selected{% endif %}>Italian</option>
+                    <option value="ja" {% if original_language=='ja' %}selected{% endif %}>Japanese</option>
+                    <option value="ko" {% if original_language=='ko' %}selected{% endif %}>Korean</option>
+                    <option value="pt" {% if original_language=='pt' %}selected{% endif %}>Portuguese</option>
+                    <option value="zh" {% if original_language=='zh' %}selected{% endif %}>Chinese</option>
+                    <option value="mk" {% if original_language=='mk' %}selected{% endif %}>Macedonian</option>
+                </select>
+                <input type="hidden" id="genre" name="genre" value="{{ genre }}">
+                <input type="hidden" id="per_page" name="per_page" value="{{ per_page }}">
+                <input type="hidden" id="sort_dir" name="sort_dir" value="{{ sort_dir }}">                
+                <input type="hidden" id="decade" name="decade" value="{{ decade }}">
+                <button type="submit">Update</button>
+            </form>
+        </div>
+    </div>
+    <div class="info-container text-muted">
+        {{ pagination.info }}
+    </div>
+
+    <div class="decades">
+        {% if decades %}
+            {% if decade == '' %}
+                <a class="selected" href="{{ url_for('index', search_text=search_text, year=year, genre=genre, sort_by=sort_by, decade='', orignial_language=original_language) }}">All</a>
+            {% else %}
+                <a href="{{ url_for('index', search_text=search_text, year=year, genre=genre, sort_by=sort_by, decade='', orignial_language=original_language) }}">All</a>
+            {% endif %}
+
+            {% for item in decades %}
+                {% if item == decade %}
+                    <a class="selected" href="{{ url_for('index', search_text=search_text, year=year, genre=genre, sort_by=sort_by, per_page=per_page, sort_dir=sort_dir, decade='', orignial_language=original_language) }}">{{ item }}</a>
+                {% else %}
+                    <a class="link-flush" href="{{ url_for('index', search_text=search_text, year=year, genre=genre, sort_by=sort_by, per_page=per_page, sort_dir=sort_dir, decade=item, orignial_language=original_language) }}">{{ item }}</a>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+
+    <div class="genres" style="align-items: center;">
+        {% if genre == '' %}
+            <a class="selected" href="{{ url_for('index', search_text=search_text, year=year, genre='', sort_by=sort_by, decade=decade, orignial_language=original_language) }}">All</a>
+        {% else %}
+            <a href="{{ url_for('index', search_text=search_text, year=year, genre='', sort_by=sort_by, decade=decade, orignial_language=original_language) }}">All</a>
+        {% endif %}
+        <span>|</span>
+        {% for item in genres %}
+            {% if item == genre %}
+                <a class="selected" href="{{ url_for('index', search_text=search_text, year=year, genre='', sort_by=sort_by, per_page=per_page, sort_dir=sort_dir, decade=decade, orignial_language=original_language) }}">{{ item }}</a>
+            {% else %}
+                <a class="link-flush" href="{{ url_for('index', search_text=search_text, year=year, genre=item, sort_by=sort_by, per_page=per_page, sort_dir=sort_dir, decade=decade, orignial_language=original_language) }}">{{ item }}</a> 
+            {% endif %}
+            
+            {% if not loop.last %}
+                <span>|</span>
+            {% endif %}
+
+        {% endfor %}
+    </div>
+
+    <div style="width: 100%;display:flex; justify-content: center;">
+        {{ pagination.links }}
+    </div>
+    <div class="movie-grid-container">
+        {% for movie in movies %}
+            
+            {% if loop.index == 1 %}
+                <!--
+                    Raw data for the first movie
+                     {% for item in movie %}
+                        {{ loop.index-1 }}: {{ item }}
+                    {% endfor %}
+                -->
+            {%endif%}
+
+            <a href="{{ url_for('movie_detail', id=movie[1]) }}" style="display: block;">
+            <div class="card-container" style="background: url('{{ movie[6] }}');">
+                <div class="movie-card text-light pt-3 d-flex flex-column">
+                    <div class="p-2">
+                        {%if original_language in ['sv', 'da', 'no'] %}
+                            <div class="title" title="{{ movie[3] }}">{{ movie[16] }}</div>
+                        {%else%}
+                            <div class="title" title="{{ movie[16] }}">{{ movie[3] }}</div>
+                        {%endif%}
+                        <div class="sub-title">{{ movie[4] }}</div>
+
+                    </div>
+
+                    <img class="card-image mt-2" src="{{ movie[5] }}" alt="{{ movie[3] }}">
+
+                    <div class="text-small flex-grow-1 my-3 px-2">
+                        <div class="my-2">
+                            {{ movie[7] }}
+                        </div>
+                    </div>
+
+                    <div class="m-3 d-flex justify-content-between align-items-center text-small">
+                        <div class="w-100"  title="Language:  {{ movie[15] }}">
+
+                            <img src="files/flags//{{ movie[15] }}.png" alt="{{ movie[15] }}">
+                        </div>
+                        <div class="w-100" title="Rating:  {{ movie[13] }}">
+                            {{ movie[12] }} {% if movie[12] < 300 %}<span title="Few Votes"> * </span>{%endif%}
+                        </div>
+
+                        <div class="w-100"  title="Popularity: {{ movie[9] }}">
+                            {{ movie[9] }}
+                        </div>
+                    </div>
+
+                    <!--
+                        <p><a target="_stream" href="{{ movie[8] }}">Stream</a></p>
+                        {{ movie }}
+                    -->
+                </div>
+            </div>
+            </a>
+
+
+        {% endfor %}
+
+      
+    </div>
+    <div class="my-4" style="width: 100%;display:flex; justify-content: center;">
+        {{ pagination.links }}
+    </div>
+    <div class="text-muted w-100 text-center my-4">
+        Do code when backdrunk<br>
+        Telegram:<a class="text-light" target="_telegram" href="https://t.me/backdrunk">@backdrunk</a>
+    </div>
+</div>
+</body>
+
+</html>

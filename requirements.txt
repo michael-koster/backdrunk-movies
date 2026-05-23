@@ -1,0 +1,5 @@
+Flask
+Flask-Caching
+flask-paginate
+python-dotenv
+requests
