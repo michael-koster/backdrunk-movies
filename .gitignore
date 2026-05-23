@@ -1,3 +1,4 @@
 .git/
 .env
 m3u_source/
+__pycache__/

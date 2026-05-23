@@ -1,0 +1,24 @@
+{% extends '_layout.html' %}
+{% block title %}Login - Backdrunk Movie{% endblock %}
+{% block extra_css %}
+.auth-logo {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <img class="auth-logo" src="{{ url_for('send_report', path='backdrunk_movies_logo.png') }}" alt="Backdrunk Movies">
+    <h1>Sign in</h1>
+    <form method="post">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" autofocus required>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+        <button class="btn-primary" type="submit">Sign in</button>
+        {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    </form>
+</div>
+{% endblock %}

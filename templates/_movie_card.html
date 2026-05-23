@@ -1,0 +1,28 @@
+{# Renders one movie card. `m` is a sqlite3.Row from the movies table. #}
+<a href="{{ url_for('movie_detail', id=m['id']) }}" style="display: block;">
+<div class="card-container" style="background: url('{{ m['backdrop_url'] }}');">
+    <div class="movie-card text-light pt-3 d-flex flex-column">
+        <div class="p-2">
+            <div class="title" title="{{ m['original_title'] }}">{{ m['name'] }}</div>
+            <div class="sub-title">{{ m['year'] }}</div>
+        </div>
+        <img class="card-image mt-2" src="{{ m['poster_url'] if m['poster_url'] and m['poster_url'].endswith('.jpg') else url_for('send_report', path='default_poster.svg') }}" alt="{{ m['name'] }}">
+        <div class="text-small flex-grow-1 my-3 px-2">
+            <div class="my-2">{{ m['genres'] }}</div>
+        </div>
+        <div class="m-3 d-flex justify-content-between align-items-center text-small">
+            <div class="w-100" title="Language: {{ m['original_language'] }}">
+                <img src="{{ url_for('send_report', path='flags/' + m['original_language'] + '.png') }}"
+                     alt="{{ m['original_language'] }}"
+                     onerror="this.style.display='none'">
+            </div>
+            <div class="w-100" title="Vote count: {{ m['vote_count'] }}">
+                {{ m['vote_count'] }}{% if m['vote_count'] is not none and m['vote_count'] < 300 %} <span title="Few Votes">*</span>{% endif %}
+            </div>
+            <div class="w-100" title="Popularity: {{ m['popularity'] }}">
+                {% if m['popularity'] is not none %}{{ '%.1f' % m['popularity'] }}{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+</a>

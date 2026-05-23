@@ -66,23 +66,34 @@
             }
         }
 
-        input[type="text"],
-        select {
-            padding: 0.5rem;
-            margin: 0.5rem;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+        .filter-form input[type="text"],
+        .filter-form select {
+            width: 100%;
+            padding: 0.5rem 0.65rem;
+            margin: 0;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.95);
+            color: #222;
+            font-size: 0.95rem;
+            box-sizing: border-box;
         }
 
-        button[type="submit"] {
-            padding: 0.5rem;
-            margin: 0.5rem;
-            width: 100px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            background: #f5f5f5;
-            color: #333;
+        .filter-form button[type="submit"] {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            margin: 0;
+            border-radius: 6px;
+            border: none;
+            background: #ffb95c;
+            color: #1a1a1a;
+            font-weight: 600;
             cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .filter-form button[type="submit"]:hover {
+            background: #ffc777;
         }
 
         .title {
@@ -104,14 +115,50 @@
             display: flex;
             justify-content: center;
             margin-bottom: 1rem;
+            padding: 0 0.75rem;
         }
 
         .filter-form {
-            padding: 1rem;
-            padding-left: 2rem;
-            padding-right: 2rem;
+            width: 100%;
+            max-width: 960px;
+            padding: 1rem 1.25rem;
             border-radius: 15px;
             background-color: rgba(51, 51, 51, 0.5);
+            box-sizing: border-box;
+        }
+
+        .filter-form form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.6rem 0.75rem;
+            align-items: end;
+        }
+
+        .filter-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            min-width: 0;
+        }
+
+        .filter-field label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.75);
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .filter-submit {
+            display: flex;
+            align-items: end;
+            grid-column: 1 / -1;
+        }
+
+        @media (min-width: 720px) {
+            .filter-submit {
+                grid-column: auto;
+                min-width: 110px;
+            }
         }
 
         .genres {
@@ -134,20 +181,20 @@
         }
 
         .movie-grid-container {
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+            gap: 0.8rem;
+            padding: 0 0.75rem;
             align-items: stretch;
-            justify-content: center;
         }
 
         .card-container {
-            margin: 0.4rem;
             transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
             border-radius: 12px;
             background-repeat: no-repeat !important;
             background-position: center center !important;
             background-size: 500% !important;
+            height: 100%;
         }
 
         .card-container:hover {
@@ -169,10 +216,9 @@
         }
 
         .movie-card {
-            overflow: auto;
             position: relative;
             text-align: center;
-            max-width: 300px;
+            width: 100%;
             height: 100%;
             border-radius: 12px;
             backdrop-filter: blur(30px);
@@ -193,11 +239,14 @@
 
         .card-image {
             width: 100%;
-            padding-left: 2rem;
-            padding-right: 2rem;
+            max-width: 220px;
+            padding: 0 1rem;
+            margin: 0 auto;
             height: auto;
             transition: all 0.2s ease-in-out;
             transform: rotate(0deg);
+            box-sizing: border-box;
+            align-self: center;
         }
 
 
@@ -264,50 +313,104 @@
             font-size: 0.9rem;
         }
 
+        .top-nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.25);
+            margin: -1rem -15px 1rem;
+        }
+        .top-nav a { color: rgba(255,255,255,0.85); padding: 0.25rem 0.5rem; border-radius: 4px; margin: 0; }
+        .top-nav a:hover { background: rgba(255,255,255,0.1); color: #ffb95c; }
+        .top-nav .nav-user { color: #ffb95c; font-weight: 600; }
+
+        @media (max-width: 600px) {
+            body { margin-top: 0; }
+            .container-fluid { padding-left: 8px; padding-right: 8px; }
+            .top-nav { gap: 0.4rem; padding: 0.5rem 0.75rem; margin: 0 -8px 0.75rem; flex-wrap: wrap; justify-content: center; }
+            .form-container { padding: 0 0.25rem; }
+            .filter-form { padding: 0.85rem 0.9rem; }
+            .movie-grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(min(155px, 100%), 1fr));
+                gap: 0.5rem;
+                padding: 0 0.25rem;
+            }
+            .title { font-size: 1.05rem; }
+            .sub-title { font-size: 0.85rem; }
+            .card-image { padding: 0 0.6rem; max-width: 180px; }
+            .genres, .decades { font-size: 0.85rem; }
+        }
+
+        @media (max-width: 360px) {
+            .movie-grid-container { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 
 <body>
     <div class="container-fluid">
-        
+    {% if current_user.is_authenticated %}
+        <div class="top-nav">
+            <span class="nav-user">{{ current_user.username }}</span>
+            <a href="{{ url_for('index') }}">Library</a>
+            <a href="{{ url_for('profile') }}">Profile</a>
+            {% if current_user.is_admin %}<a href="{{ url_for('admin_users') }}">Admin</a>{% endif %}
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    {% endif %}
+
     <div class="form-container">
         <div class="filter-form">
             <form method="get">
-                <label for="search_text">Search:</label>
-                <input type="text" id="search_text" name="search_text" value="{{ search_text }}">
-                <label for="year">Year:</label>
-                <input type="text" id="year" name="year" value="{{ year }}">
-                <label for="sort_by">Sort By:</label>
-                <select id="sort_by" name="sort_by">
-                    <option value="id" {% if sort_by=='id' %}selected{% endif %}>ID</option>
-                    <option value="vote_average" {% if sort_by=='vote_average' %}selected{% endif %}>Rating</option>
-                    <option value="popularity" {% if sort_by=='popularity' %}selected{% endif %}>Popularity</option>
-                    <option value="name" {% if sort_by=='name' %}selected{% endif %}>Name</option>
-                    <option value="year" {% if sort_by=='year' %}selected{% endif %}>Year</option>
-                    <option value="type" {% if sort_by=='type' %}selected{% endif %}>Genre</option>
-                    <option value="created" {% if sort_by=='created' %}selected{% endif %}>Created</option>
-                </select>
-                <select id="original_language" name="original_language">
-                    <option value="" {% if original_language=='' %}selected{% endif %}>All</option>
-                    <option value="en" {% if original_language=='en' %}selected{% endif %}>English</option>
-                    <option value="sv" {% if original_language=='sv' %}selected{% endif %}>Swedish</option>
-                    <option value="no" {% if original_language=='no' %}selected{% endif %}>Norwegian</option>
-                    <option value="da" {% if original_language=='da' %}selected{% endif %}>Danish</option>
-                    <option value="es" {% if original_language=='es' %}selected{% endif %}>Spanish</option>
-                    <option value="fr" {% if original_language=='fr' %}selected{% endif %}>French</option>
-                    <option value="de" {% if original_language=='de' %}selected{% endif %}>German</option>
-                    <option value="it" {% if original_language=='it' %}selected{% endif %}>Italian</option>
-                    <option value="ja" {% if original_language=='ja' %}selected{% endif %}>Japanese</option>
-                    <option value="ko" {% if original_language=='ko' %}selected{% endif %}>Korean</option>
-                    <option value="pt" {% if original_language=='pt' %}selected{% endif %}>Portuguese</option>
-                    <option value="zh" {% if original_language=='zh' %}selected{% endif %}>Chinese</option>
-                    <option value="mk" {% if original_language=='mk' %}selected{% endif %}>Macedonian</option>
-                </select>
+                <div class="filter-field">
+                    <label for="search_text">Search</label>
+                    <input type="text" id="search_text" name="search_text" value="{{ search_text }}">
+                </div>
+                <div class="filter-field">
+                    <label for="year">Year</label>
+                    <input type="text" id="year" name="year" value="{{ year }}" inputmode="numeric">
+                </div>
+                <div class="filter-field">
+                    <label for="sort_by">Sort By</label>
+                    <select id="sort_by" name="sort_by">
+                        <option value="id" {% if sort_by=='id' %}selected{% endif %}>ID</option>
+                        <option value="vote_average" {% if sort_by=='vote_average' %}selected{% endif %}>Rating</option>
+                        <option value="popularity" {% if sort_by=='popularity' %}selected{% endif %}>Popularity</option>
+                        <option value="name" {% if sort_by=='name' %}selected{% endif %}>Name</option>
+                        <option value="year" {% if sort_by=='year' %}selected{% endif %}>Year</option>
+                        <option value="type" {% if sort_by=='type' %}selected{% endif %}>Genre</option>
+                        <option value="created" {% if sort_by=='created' %}selected{% endif %}>Created</option>
+                    </select>
+                </div>
+                <div class="filter-field">
+                    <label for="original_language">Language</label>
+                    <select id="original_language" name="original_language">
+                        <option value="" {% if original_language=='' %}selected{% endif %}>All</option>
+                        <option value="en" {% if original_language=='en' %}selected{% endif %}>English</option>
+                        <option value="sv" {% if original_language=='sv' %}selected{% endif %}>Swedish</option>
+                        <option value="no" {% if original_language=='no' %}selected{% endif %}>Norwegian</option>
+                        <option value="da" {% if original_language=='da' %}selected{% endif %}>Danish</option>
+                        <option value="es" {% if original_language=='es' %}selected{% endif %}>Spanish</option>
+                        <option value="fr" {% if original_language=='fr' %}selected{% endif %}>French</option>
+                        <option value="de" {% if original_language=='de' %}selected{% endif %}>German</option>
+                        <option value="it" {% if original_language=='it' %}selected{% endif %}>Italian</option>
+                        <option value="ja" {% if original_language=='ja' %}selected{% endif %}>Japanese</option>
+                        <option value="ko" {% if original_language=='ko' %}selected{% endif %}>Korean</option>
+                        <option value="pt" {% if original_language=='pt' %}selected{% endif %}>Portuguese</option>
+                        <option value="zh" {% if original_language=='zh' %}selected{% endif %}>Chinese</option>
+                        <option value="mk" {% if original_language=='mk' %}selected{% endif %}>Macedonian</option>
+                    </select>
+                </div>
                 <input type="hidden" id="genre" name="genre" value="{{ genre }}">
                 <input type="hidden" id="per_page" name="per_page" value="{{ per_page }}">
-                <input type="hidden" id="sort_dir" name="sort_dir" value="{{ sort_dir }}">                
+                <input type="hidden" id="sort_dir" name="sort_dir" value="{{ sort_dir }}">
                 <input type="hidden" id="decade" name="decade" value="{{ decade }}">
-                <button type="submit">Update</button>
+                <div class="filter-submit">
+                    <button type="submit">Update</button>
+                </div>
             </form>
         </div>
     </div>
@@ -383,7 +486,7 @@
 
                     </div>
 
-                    <img class="card-image mt-2" src="{{ movie[5] }}" alt="{{ movie[3] }}">
+                    <img class="card-image mt-2" src="{{ movie[5] if movie[5] and movie[5].endswith('.jpg') else url_for('send_report', path='default_poster.svg') }}" alt="{{ movie[3] }}">
 
                     <div class="text-small flex-grow-1 my-3 px-2">
                         <div class="my-2">

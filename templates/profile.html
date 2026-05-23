@@ -1,0 +1,277 @@
+{% extends '_layout.html' %}
+{% block title %}Profile - Backdrunk Movie{% endblock %}
+{% block extra_css %}
+.profile-wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+.profile-card {
+    background: rgba(0,0,0,0.35);
+    border-radius: 12px;
+    padding: 1.4rem;
+    margin-bottom: 1.5rem;
+}
+.profile-card h2 { font-size: 1.2rem; margin-bottom: 1rem; }
+.profile-card details > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-bottom: 0;
+}
+.profile-card details > summary::-webkit-details-marker { display: none; }
+.profile-card details > summary h2 { margin-bottom: 0; }
+.profile-card details > summary .accordion-chevron {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+.profile-card details[open] > summary .accordion-chevron { transform: rotate(180deg); }
+.profile-card details[open] > summary { margin-bottom: 1rem; }
+.profile-card .creds-status {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.85rem;
+    font-family: 'Courier New', Courier, monospace;
+    margin-left: auto;
+}
+.profile-card .creds-status.set { color: #7cd992; }
+.profile-card .grid-form {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.6rem 1rem;
+    align-items: center;
+    max-width: 700px;
+}
+.profile-card label { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+.profile-card input {
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.08);
+    color: #f5f5f5;
+}
+.profile-card button {
+    margin-top: 1rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: 6px;
+    border: none;
+    background: #ffb95c;
+    color: #1a1a1a;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Card grid styles mirror index.html so the partial renders identically. */
+.movie-grid-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: flex-start;
+}
+.card-container {
+    margin: 0.4rem;
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 12px;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: 500% !important;
+}
+.card-container:hover {
+    z-index: 1000;
+    border: 1px solid #f5f5f5;
+    background-size: 400% !important;
+}
+.movie-card {
+    overflow: auto;
+    position: relative;
+    text-align: center;
+    max-width: 300px;
+    height: 100%;
+    border-radius: 12px;
+    backdrop-filter: blur(30px);
+    background: rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+.card-image {
+    width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    height: auto;
+}
+.title {
+    font-size: 1.4rem; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sub-title { text-align: center; }
+.text-small { font-size: 0.8rem; }
+.empty { color: rgba(255,255,255,0.5); padding: 0.5rem 0; }
+
+/* Compact watchlist cards — scoped to the watchlist grid only. */
+.watchlist-grid .card-container { margin: 0.25rem; }
+.watchlist-grid .movie-card { max-width: 170px; }
+.watchlist-grid .card-image { padding-left: 0.8rem; padding-right: 0.8rem; }
+.watchlist-grid .title { font-size: 0.95rem; }
+.watchlist-grid .sub-title { font-size: 0.8rem; }
+.watchlist-grid .text-small { font-size: 0.7rem; }
+.watchlist-grid .movie-card .p-2 { padding: 0.4rem !important; }
+.watchlist-grid .movie-card .m-3 { margin: 0.5rem !important; }
+.watchlist-grid .movie-card .my-3 { margin-top: 0.4rem !important; margin-bottom: 0.4rem !important; }
+.watchlist-grid .movie-card .my-2 { margin-top: 0.25rem !important; margin-bottom: 0.25rem !important; }
+
+/* Seen movies as a compact table. */
+.seen-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.seen-table th, .seen-table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    vertical-align: middle;
+}
+.seen-table th {
+    text-align: left;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.seen-table tbody tr { transition: background 0.15s ease; }
+.seen-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+.seen-table a.row-link {
+    color: inherit;
+    text-decoration: none;
+    display: block;
+}
+.seen-poster {
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+}
+.seen-title { font-weight: 500; }
+.seen-title-sub { color: rgba(255,255,255,0.55); font-size: 0.8rem; }
+.seen-genres {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.8rem;
+    max-width: 280px;
+}
+.seen-flag { width: 22px; height: auto; vertical-align: middle; }
+.seen-rating-stars { color: #ffb95c; white-space: nowrap; }
+.seen-rating-empty { color: rgba(255,255,255,0.35); }
+.seen-num { text-align: right; font-variant-numeric: tabular-nums; }
+.seen-table-wrap { overflow-x: auto; }
+.col-poster { width: 56px; }
+.col-rating { width: 110px; }
+.col-score, .col-year { width: 70px; }
+.col-lang { width: 40px; text-align: center; }
+@media (max-width: 640px) {
+    .seen-table .hide-sm { display: none; }
+}
+{% endblock %}
+{% block content %}
+<div class="profile-wrap">
+    {% set creds_set = user_row['xtream_url'] and user_row['xtream_username'] and user_row['xtream_password'] %}
+    <div class="profile-card">
+        <details{% if not creds_set %} open{% endif %}>
+            <summary>
+                <h2>Xtream credentials</h2>
+                <span class="creds-status {% if creds_set %}set{% endif %}">
+                    {% if creds_set %}<i class="fa-solid fa-check"></i> configured{% else %}not configured{% endif %}
+                </span>
+                <span class="accordion-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+            </summary>
+            <p class="text-muted" style="margin-bottom: 1rem;">
+                Fill these in to enable the Stream button on movie pages. Your credentials are
+                only used to build personal stream links and are never shown to other users.
+            </p>
+            <form method="post">
+                <div class="grid-form">
+                    <label for="xtream_url">Server URL</label>
+                    <input type="text" id="xtream_url" name="xtream_url"
+                           placeholder="http://example.com:2095"
+                           value="{{ user_row['xtream_url'] or '' }}">
+                    <label for="xtream_username">Username</label>
+                    <input type="text" id="xtream_username" name="xtream_username"
+                           value="{{ user_row['xtream_username'] or '' }}">
+                    <label for="xtream_password">Password</label>
+                    <input type="text" id="xtream_password" name="xtream_password"
+                           value="{{ user_row['xtream_password'] or '' }}">
+                </div>
+                <button type="submit">Save</button>
+            </form>
+        </details>
+    </div>
+
+    <div class="profile-card">
+        <h2>Watchlist <span class="text-muted" style="font-size: 0.85rem;">({{ watchlist|length }})</span></h2>
+        {% if watchlist %}
+            <div class="movie-grid-container watchlist-grid">
+                {% for m in watchlist %}{% include '_movie_card.html' %}{% endfor %}
+            </div>
+        {% else %}
+            <div class="empty">No movies on your watchlist yet. Tap the heart on a movie page.</div>
+        {% endif %}
+    </div>
+
+    <div class="profile-card">
+        <h2>Seen <span class="text-muted" style="font-size: 0.85rem;">({{ seen|length }})</span></h2>
+        {% if seen %}
+            <div class="seen-table-wrap">
+                <table class="seen-table">
+                    <thead>
+                        <tr>
+                            <th class="col-poster"></th>
+                            <th>Title</th>
+                            <th class="col-year hide-sm">Year</th>
+                            <th class="hide-sm">Genres</th>
+                            <th class="col-rating">Your rating</th>
+                            <th class="col-score seen-num hide-sm" title="TMDB score">TMDB</th>
+                            <th class="col-lang hide-sm">Lang</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in seen %}
+                        <tr>
+                            <td class="col-poster">
+                                <a class="row-link" href="{{ url_for('movie_detail', id=m['id']) }}">
+                                    <img class="seen-poster" src="{{ m['poster_url'] if m['poster_url'] and m['poster_url'].endswith('.jpg') else url_for('send_report', path='default_poster.svg') }}" alt="{{ m['name'] }}">
+                                </a>
+                            </td>
+                            <td>
+                                <a class="row-link" href="{{ url_for('movie_detail', id=m['id']) }}">
+                                    <div class="seen-title" title="{{ m['original_title'] }}">{{ m['name'] }}</div>
+                                    {% if m['original_title'] and m['original_title'] != m['name'] %}
+                                        <div class="seen-title-sub">{{ m['original_title'] }}</div>
+                                    {% endif %}
+                                </a>
+                            </td>
+                            <td class="col-year hide-sm">{{ m['year'] }}</td>
+                            <td class="seen-genres hide-sm">{{ m['genres'] }}</td>
+                            <td class="col-rating">
+                                {% if m['rating'] %}
+                                    <span class="seen-rating-stars">
+                                        {% for _ in range(m['rating']) %}★{% endfor %}{% for _ in range(5 - m['rating']) %}<span class="seen-rating-empty">★</span>{% endfor %}
+                                    </span>
+                                {% else %}
+                                    <span class="seen-rating-empty">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="col-score seen-num hide-sm">
+                                {% if m['vote_average'] is not none %}{{ '%.1f' % m['vote_average'] }}{% endif %}
+                            </td>
+                            <td class="col-lang hide-sm" title="Language: {{ m['original_language'] }}">
+                                <img class="seen-flag"
+                                     src="{{ url_for('send_report', path='flags/' + m['original_language'] + '.png') }}"
+                                     alt="{{ m['original_language'] }}"
+                                     onerror="this.style.display='none'">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty">No movies marked seen yet. Tap the eye on a movie page.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

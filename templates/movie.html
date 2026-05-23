@@ -107,6 +107,7 @@
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
+            align-items: center;
         }
         .btn-action {
             display: inline-block;
@@ -125,6 +126,51 @@
             filter: brightness(1.1);
             color: #1a1a1a;
         }
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.6rem;
+            height: 2.6rem;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
+            color: #f5f5f5;
+            font-size: 1.1rem;
+            border: none;
+            cursor: pointer;
+        }
+        .icon-btn:hover { filter: brightness(1.15); color: #ffb95c; }
+        .icon-btn.active { color: #ff6b9a; }
+        .icon-btn.seen-active { color: #6fd28a; }
+        .rating-row {
+            display: inline-flex;
+            gap: 0.15rem;
+            background: rgba(255,255,255,0.08);
+            padding: 0.2rem;
+            border-radius: 6px;
+        }
+        .rating-row button {
+            width: 1.9rem;
+            height: 1.9rem;
+            border: none;
+            background: transparent;
+            color: #f5f5f5;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .rating-row button:hover { background: rgba(255,255,255,0.15); }
+        .rating-row button.current {
+            background: #ffb95c;
+            color: #1a1a1a;
+            font-weight: 700;
+        }
+        .stream-hint {
+            margin-top: 0.6rem;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.55);
+        }
+        .stream-hint a { color: #ffb95c; text-decoration: underline; }
         .flag {
             height: 1.2em;
             vertical-align: middle;
@@ -196,9 +242,30 @@
             }
             .hero-title { font-size: 1.8rem; }
         }
+        .top-nav {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.25);
+        }
+        .top-nav a { color: rgba(255,255,255,0.85); padding: 0.25rem 0.5rem; border-radius: 4px; }
+        .top-nav a:hover { background: rgba(255,255,255,0.1); color: #ffb95c; }
+        .top-nav .nav-user { color: #ffb95c; font-weight: 600; }
     </style>
 </head>
 <body>
+    {% if current_user.is_authenticated %}
+        <div class="top-nav">
+            <span class="nav-user">{{ current_user.username }}</span>
+            <a href="{{ url_for('index') }}">Library</a>
+            <a href="{{ url_for('profile') }}">Profile</a>
+            {% if current_user.is_admin %}<a href="{{ url_for('admin_users') }}">Admin</a>{% endif %}
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    {% endif %}
     <a class="back-link text-muted" href="{{ url_for('index') }}">← Back to library</a>
 
     {% if movie['backdrop_url'] %}
@@ -227,8 +294,10 @@
 
     <div class="detail-body">
         <div>
-            {% if movie['poster_url'] %}
+            {% if movie['poster_url'] and movie['poster_url'].endswith('.jpg') %}
                 <img class="poster" src="{{ movie['poster_url'] }}" alt="{{ movie['name'] }}">
+            {% else %}
+                <img class="poster" src="{{ url_for('send_report', path='default_poster.svg') }}" alt="{{ movie['name'] }}">
             {% endif %}
         </div>
         <div>
@@ -272,13 +341,73 @@
             {% endif %}
 
             <div class="actions">
-                {% if movie['streaming_url'] %}
-                    <a class="btn-action" target="_blank" rel="noopener" href="{{ movie['streaming_url'] }}">▶ Stream</a>
+                {% if stream_url %}
+                    <button type="button" id="stream-btn" class="btn-action" onclick="startStream()">▶ Stream</button>
+                    <a class="btn-action secondary" target="_blank" rel="noopener" href="{{ stream_url }}" title="Open the raw stream URL in a new tab (bypasses transcoding)">Open external</a>
                 {% endif %}
                 {% if movie['movie_id'] %}
                     <a class="btn-action secondary" target="_blank" rel="noopener" href="https://www.themoviedb.org/movie/{{ movie['movie_id'] }}">TMDB</a>
                 {% endif %}
+
+                <form method="post" action="{{ url_for('toggle_watchlist', id=movie['id']) }}" style="display:inline;">
+                    <button type="submit"
+                            class="icon-btn {% if state.in_watchlist %}active{% endif %}"
+                            title="{% if state.in_watchlist %}Remove from watchlist{% else %}Add to watchlist{% endif %}">
+                        <i class="{% if state.in_watchlist %}fa-solid fa-heart{% else %}fa-regular fa-heart{% endif %}"></i>
+                    </button>
+                </form>
+                <form method="post" action="{{ url_for('toggle_seen', id=movie['id']) }}" style="display:inline;">
+                    <button type="submit"
+                            class="icon-btn {% if state.seen %}seen-active{% endif %}"
+                            title="{% if state.seen %}Mark as not seen{% else %}Mark as seen{% endif %}">
+                        <i class="{% if state.seen %}fa-solid fa-eye{% else %}fa-regular fa-eye{% endif %}"></i>
+                    </button>
+                </form>
+
+                <form method="post" action="{{ url_for('rate_movie', id=movie['id']) }}" style="display:inline;" class="rating-row">
+                    {% for n in range(1, 11) %}
+                        <button type="submit" name="rating" value="{{ n }}"
+                                class="{% if state.rating == n %}current{% endif %}"
+                                title="Rate {{ n }}/10{% if state.rating == n %} (click to clear){% endif %}">
+                            {{ n }}
+                        </button>
+                    {% endfor %}
+                </form>
             </div>
+
+            {% if stream_url %}
+                <video id="player" controls preload="metadata"
+                       style="display:none; width:100%; max-height:70vh; margin-top:1rem; border-radius:8px; background:#000;"></video>
+                <div id="stream-error" class="stream-hint" style="display:none; color:#ff8a8a;">
+                    Couldn't start the stream. Try "Open external" or check the server logs.
+                </div>
+                <script>
+                    function startStream() {
+                        var player = document.getElementById('player');
+                        var btn = document.getElementById('stream-btn');
+                        var err = document.getElementById('stream-error');
+                        err.style.display = 'none';
+                        if (!player.src) {
+                            player.src = {{ url_for('stream', id=movie['id'])|tojson }};
+                            player.addEventListener('error', function () {
+                                err.style.display = 'block';
+                            });
+                        }
+                        player.style.display = 'block';
+                        btn.style.display = 'none';
+                        var p = player.play();
+                        if (p && typeof p.catch === 'function') {
+                            p.catch(function () { /* user can press play manually */ });
+                        }
+                    }
+                </script>
+            {% endif %}
+
+            {% if not stream_url and current_user.is_authenticated and not current_user.has_xtream %}
+                <div class="stream-hint">
+                    Add your Xtream details on your <a href="{{ url_for('profile') }}">profile</a> to enable streaming.
+                </div>
+            {% endif %}
         </div>
     </div>
 

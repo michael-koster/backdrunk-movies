@@ -1,0 +1,9 @@
+{% extends '_layout.html' %}
+{% block title %}Invite invalid - Backdrunk Movie{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <h1>Invite invalid</h1>
+    <p class="text-muted">This invite link has already been used or never existed. Ask an admin for a fresh one.</p>
+    <a class="btn-primary" style="display:block;text-align:center;text-decoration:none;color:#1a1a1a;" href="{{ url_for('login') }}">Go to login</a>
+</div>
+{% endblock %}

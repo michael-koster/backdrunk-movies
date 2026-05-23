@@ -1,0 +1,16 @@
+{% extends '_layout.html' %}
+{% block title %}Accept invite - Backdrunk Movie{% endblock %}
+{% block content %}
+<div class="auth-card">
+    <h1>Welcome, {{ username }}</h1>
+    <p class="text-muted">Choose a password to finish setting up your account.</p>
+    <form method="post">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" minlength="6" required>
+        <label for="confirm">Confirm password</label>
+        <input type="password" id="confirm" name="confirm" minlength="6" required>
+        <button class="btn-primary" type="submit">Set password &amp; sign in</button>
+        {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    </form>
+</div>
+{% endblock %}

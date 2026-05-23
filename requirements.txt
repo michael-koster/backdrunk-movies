@@ -1,5 +1,8 @@
+# System dependency: ffmpeg + ffprobe must be on PATH for /stream/<id>
+# (live MKV->MP4 transcoding). Install with: apt install ffmpeg
 Flask
 Flask-Caching
+Flask-Login
 flask-paginate
 python-dotenv
 requests
