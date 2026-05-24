@@ -1,14 +1,15 @@
+import os
 import sqlite3
 import requests
-import json
 import re
 import time
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Constants
-TMDB_API_KEY = '8a587de91cf5a3605c413116322e7f96'  # Replace with your TMDB API key
-REQUEST_DELAY = 0.05  # 100 milliseconds delay between requests to respect rate limits
+TMDB_API_KEY = os.environ.get('TMDB_API_KEY', '8a587de91cf5a3605c413116322e7f96')
 COMMIT_INTERVAL = 10  # Commit to the database every 10 movies
+DEFAULT_WORKERS = 8   # Parallel TMDB requests
 DBFILE = 'movies-v3.db'
 
 # Dictionary to map genre IDs to names
@@ -78,55 +79,59 @@ def create_database():
             updated TEXT
         )
     ''')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_movies_movie_id ON movies(movie_id)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_movies_name_lower ON movies(lower(trim(name)))')
     conn.commit()
     conn.close()
 
 
 
-    
-# VOD: IMDB Top Movies
-# VOD: Premiere Cinemas
-# VOD: Old Popular Movies
-# VOD: Svenska
-
-# Parse M3U file
-def parse_m3u(file_path):
-    with open(file_path, 'r') as file:
+# Parse M3U file. `groups` is a list of group-title prefixes to include.
+def parse_m3u(file_path, groups):
+    with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
-    #pattern = re.compile(r'#EXTINF:-1.*group-title="Premiere Cinemas.*",(.+?)\s+(http[^\s]+)')
-    pattern = re.compile(r'#EXTINF:-1.*group-title="Old Popular Movies.*",(.+?)\s+(http[^\s]+)')
+
+    alternation = '|'.join(re.escape(g) for g in groups)
+    pattern = re.compile(
+        rf'#EXTINF:-1.*group-title="(?:{alternation})[^"]*",(.+?)\s+(http[^\s]+)'
+    )
     matches = pattern.findall(content)
     cleaned_titles_urls = []
-    
-    print(f'Found {len(matches)} movies in the M3U file')
 
-    for match in matches:
-        title, url = match
+    print(f'Found {len(matches)} movies in the M3U file (groups: {", ".join(groups)})')
+
+    for title, url in matches:
         # Remove all [content] except for the year
         cleaned_title = re.sub(r'\[(?!\d{4}\])[^]]*\]', '', title).strip()
         cleaned_titles_urls.append((cleaned_title, url))
-    
+
     return cleaned_titles_urls
 
 
-# get all group titles from m3u file, distict
+# Get all distinct group titles from m3u file
 def get_group_titles(file_path):
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
     pattern = re.compile(r'#EXTINF:-1.*group-title="(.+?)".*')
-    matches = pattern.findall(content)
-    return list(set(matches))
+    return sorted(set(pattern.findall(content)))
     
 
 
 # Search for movie information on TheMovieDB
-def search_movie_info(movie_title, api_key):
-    search_url = f'https://api.themoviedb.org/3/search/movie?api_key={api_key}&include_adult=true&query={movie_title}'
-    response = requests.get(search_url)
+def search_movie_info(movie_title, api_key, year=None, session=None):
+    params = {'api_key': api_key, 'include_adult': 'true', 'query': movie_title}
+    if year:
+        params['year'] = year
+    getter = (session or requests).get
+    response = getter(
+        'https://api.themoviedb.org/3/search/movie',
+        params=params,
+        timeout=10,
+    )
     if response.status_code == 200:
-        data = response.json()
-        if data['results']:
-            return data['results'][0]
+        results = response.json().get('results') or []
+        if results:
+            return results[0]
     return None
 
 # Store movie information in the database
@@ -159,141 +164,151 @@ def store_movie_info(movie, cursor):
 def normalize_name(name):
     return name.strip().lower()
 
-def find_movie_by_id(movie_id):
-    conn = sqlite3.connect(DBFILE)
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM movies WHERE movie_id = ?', (movie_id,))
-    movie = cursor.fetchone()
-    conn.close()
-    return movie
-
-
-# find movie in db by name
-def find_movie_by_name(movie_name):
-    conn = sqlite3.connect(DBFILE)
-    cursor = conn.cursor()
-    # Normalize both sides for comparison
-    cursor.execute('SELECT * FROM movies WHERE lower(trim(name)) like ?', (movie_name.strip().lower(),))
-    movie = cursor.fetchone()
-    conn.close()
-    return movie
-
 
 def write_to_logfile(message):
-    filename = 'not_found.txt'
-    with open(filename, 'a') as file:
+    with open('not_found.txt', 'a', encoding='utf-8') as file:
         file.write(message + '\n')
 
 
-def main(m3u_file):
+def build_movie_record(movie_info, url):
+    current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+    release_date = movie_info.get('release_date') or ''
+    poster_path = movie_info.get('poster_path') or ''
+    backdrop_path = movie_info.get('backdrop_path') or ''
+    return {
+        'name': movie_info['title'],
+        'id': movie_info['id'],
+        'year': release_date[:4],
+        'poster_url': f'https://image.tmdb.org/t/p/w500{poster_path}' if poster_path else '',
+        'backdrop_url': f'https://image.tmdb.org/t/p/original{backdrop_path}' if backdrop_path else '',
+        'genres': ', '.join(
+            name for name in (genres.get(g) for g in movie_info.get('genre_ids', [])) if name
+        ),
+        'streaming_url': url,
+        'popularity': movie_info.get('popularity'),
+        'release_date': release_date,
+        'overview': movie_info.get('overview'),
+        'vote_average': movie_info.get('vote_average'),
+        'vote_count': movie_info.get('vote_count'),
+        'adult': movie_info.get('adult'),
+        'original_language': movie_info.get('original_language'),
+        'original_title': movie_info.get('original_title'),
+        'video': movie_info.get('video'),
+        'created': current_time,
+        'updated': current_time,
+    }
+
+
+def main(m3u_file, groups, workers=DEFAULT_WORKERS):
     create_database()
-    
-    conn = sqlite3.connect(DBFILE)
-    cursor = conn.cursor()
+    start = time.monotonic()
 
-    movie_titles_urls = parse_m3u(M3U_FILE)
-    movie_count = 0
+    with sqlite3.connect(DBFILE) as conn:
+        cursor = conn.cursor()
 
-    for title, url in movie_titles_urls:
-        match = re.match(r'(.+?)(?:\s+\[(\d{4})\])?$', title)
-        #match = re.match(r'(.+)\s+\[(\d{4})\]', title)
-        #match = re.match(r'(.+)', title)
-        if match:
+        # Pre-load existing movies — replaces a full-table scan per item with O(1) set lookups.
+        existing_names = {
+            row[0] for row in cursor.execute('SELECT lower(trim(name)) FROM movies')
+        }
+        existing_ids = {
+            row[0] for row in cursor.execute(
+                'SELECT movie_id FROM movies WHERE movie_id IS NOT NULL'
+            )
+        }
+
+        movie_titles_urls = parse_m3u(m3u_file, groups)
+
+        # Parse titles and skip names already in the DB before spending any HTTP.
+        to_fetch = []
+        for title, url in movie_titles_urls:
+            match = re.match(r'(.+?)(?:\s+\[(\d{4})\])?$', title)
+            if not match:
+                print(f'🔍 {title} No movies found in the M3U file')
+                continue
             movie_name = match.group(1).strip()
-            movie_year = int(match.group(2)) if match.group(2) else ""
-            
-            #print(f'🔍 Searching for {movie_name} ({movie_year})...')
-            
-            search_name = movie_name.replace(' ', '+').replace('.', '_') + '+' + str(movie_year)
-
-
-            if search_name[-1].isdigit():
-                search_name = search_name[:-4].strip()
-
-            search_name = search_name
-            # Duplicate check
-            if find_movie_by_name(movie_name) != None:
-                #print(f'🟠 {movie_name} already exists in the database')
+            movie_year = match.group(2) or None
+            if normalize_name(movie_name) in existing_names:
                 continue
-                
-            
-            # Respect rate limits
-            time.sleep(REQUEST_DELAY)
+            to_fetch.append((movie_name, movie_year, url))
 
-            movie_info = search_movie_info(search_name, TMDB_API_KEY)
-            if (movie_info is None):
-                print(f'⛔ Not found at TMDB: {search_name}')
-                write_to_logfile(movie_name)
-                continue
+        if not to_fetch:
+            print('No new movies to fetch')
+            return
 
-            if (find_movie_by_id(movie_info['id']) != None):
-                print(f'🟧 {movie_info['id']} {movie_name} already exists in the database')
-                continue
+        print(f'Fetching {len(to_fetch)} new movies from TMDB ({workers} workers)…')
 
-            current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        session = requests.Session()
 
-            if movie_info:
-                movie = {
-                    'name': movie_info['title'],
-                    'id': movie_info['id'],
-                    'year': movie_info['release_date'][:4],
-                    'poster_url': f'https://image.tmdb.org/t/p/w500{movie_info["poster_path"]}',
-                    'backdrop_url': f'https://image.tmdb.org/t/p/w500{movie_info["backdrop_path"]}',
-                    'genres': ', '.join([genres[genre_id] for genre_id in movie_info['genre_ids']]),
-                    'streaming_url': url,
-                    'popularity': movie_info['popularity'],
-                    'release_date': movie_info['release_date'],
-                    'overview': movie_info['overview'],
-                    'vote_average': movie_info['vote_average'],
-                    'vote_count': movie_info['vote_count'],
-                    'adult': movie_info['adult'],
-                    'original_language': movie_info['original_language'],
-                    'original_title': movie_info['original_title'],
-                    'video': movie_info['video'],
-                    'created': current_time,
-                    'updated': current_time,
+        def fetch(item):
+            movie_name, movie_year, _url = item
+            try:
+                info = search_movie_info(movie_name, TMDB_API_KEY, year=movie_year, session=session)
+            except requests.RequestException:
+                info = None
+            return item, info
 
-                }
+        movie_count = 0
+        with ThreadPoolExecutor(max_workers=workers) as ex:
+            futures = [ex.submit(fetch, item) for item in to_fetch]
+            for fut in as_completed(futures):
+                (movie_name, movie_year, url), movie_info = fut.result()
+
+                if movie_info is None:
+                    label = f'{movie_name} ({movie_year})' if movie_year else movie_name
+                    print(f'⛔ Not found at TMDB: {label}')
+                    write_to_logfile(movie_name)
+                    continue
+
+                # Guard against two M3U entries resolving to the same TMDB id
+                # (the set is also seeded with rows already in the DB).
+                if movie_info['id'] in existing_ids:
+                    print(f'🟧 {movie_info["id"]} {movie_name} already exists in the database')
+                    continue
+                existing_ids.add(movie_info['id'])
+
+                movie = build_movie_record(movie_info, url)
                 store_movie_info(movie, cursor)
                 print(f'🟢 {movie["name"]}')
                 movie_count += 1
 
-                # Commit to the database every COMMIT_INTERVAL movies
                 if movie_count % COMMIT_INTERVAL == 0:
                     conn.commit()
                     print(f'✅ Committed {movie_count} movies to the database')
 
-        else:
-            print(f'🔍 {title} No movies found in the M3U file')
-
-        
-    # Final commit to catch any remaining movies
-    conn.commit()
-    print(f'Committed {movie_count} movies to the database')
-    conn.close()
-    print('Done!')
+        conn.commit()
+        elapsed = time.monotonic() - start
+        print(f'Committed {movie_count} movies in {elapsed:.1f}s')
+        print('Done!')
 
 if __name__ == '__main__':
-
-    # argument parser form action (list or parse) and m3u file
     parser = argparse.ArgumentParser(description='Process M3U file')
-    parser.add_argument('action', type=str, help='Action to perform: list or parse', default='list')
-    parser.add_argument('file', type=str, help='M3U file to process', default='./m3u_source/source.m3u')
+    parser.add_argument('action', choices=['list', 'parse'], help='Action to perform')
+    parser.add_argument(
+        'file',
+        type=str,
+        nargs='?',
+        default='./m3u_source/source.m3u',
+        help='M3U file to process (default: ./m3u_source/source.m3u)',
+    )
+    parser.add_argument(
+        '--groups',
+        nargs='+',
+        default=['IMDB Top Movie'],
+        help='Group-title prefixes to parse (parse action). May be repeated. '
+             'Default: "IMDB Top Movie"',
+    )
+    parser.add_argument(
+        '--workers',
+        type=int,
+        default=DEFAULT_WORKERS,
+        help=f'Number of parallel TMDB requests (default: {DEFAULT_WORKERS}). Use 1 to disable parallelism.',
+    )
     args = parser.parse_args()
 
     if args.action == 'list':
         print('Group Titles:')
-        M3U_FILE = args.file
-        group_titles = get_group_titles(M3U_FILE)
-        for group_title in group_titles:
-            #if 'VOD' in group_title:
+        for group_title in get_group_titles(args.file):
             print(group_title)
     elif args.action == 'parse':
         print('Parsing M3U file...')
-        M3U_FILE = args.file
-        main(M3U_FILE)
-
-
-
-
-    
+        main(args.file, args.groups, workers=args.workers)
